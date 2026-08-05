@@ -341,9 +341,10 @@ function startStage(i){ cur={ stage:i, idx:0, gained:0, correctInStage:0, totalI
 function renderTask(){ const s=STAGES[cur.stage], t=s.tasks[cur.idx]; curTask=t; if(t.kind==="concept") renderQuestion(s,t); else renderInteractive(s,t); }
 function codeHTML(code){ if(!code) return ""; let h=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\b(for|in|if|else|print|append|insert|remove|pop|sort|reverse|len|max|min|sum|True|False)\b/g,m=>['append','insert','remove','pop','sort','reverse','len','max','min','sum','print'].indexOf(m)>=0?'<span class="fn">'+m+'</span>':'<span class="kw">'+m+'</span>').replace(/\b(\d+)\b/g,'<span class="num">$1</span>'); return '<div class="code">'+h+'</div>'; }
 
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;const t=a[i];a[i]=a[j];a[j]=t;}return a;}
 function renderQuestion(s,q){
   const isTF=q.type==="tf"; curCorrect=isTF?(q.answer?1:0):q.answer;
-  let optsHTML= isTF?`<div class="tf"><div class="opt" data-i="1">✅ صح</div><div class="opt" data-i="0">❌ غلط</div></div>`:'<div class="opts">'+q.opts.map((o,i)=>`<div class="opt" data-i="${i}"><span class="k">${["أ","ب","ج","د"][i]}</span><span>${o}</span></div>`).join("")+'</div>';
+  let optsHTML= isTF?`<div class="tf"><div class="opt" data-i="1">✅ صح</div><div class="opt" data-i="0">❌ غلط</div></div>`:'<div class="opts">'+shuffle(q.opts.map((o,i)=>({o,i}))).map((it,pos)=>`<div class="opt" data-i="${it.i}"><span class="k">${["أ","ب","ج","د"][pos]}</span><span>${it.o}</span></div>`).join("")+'</div>';
   $("#playCard").innerHTML=`
     <div class="qhead"><span class="qtag">${s.emoji} ${s.tag}</span><span class="qcount">مهمة ${cur.idx+1} من ${s.tasks.length}</span></div>
     ${timerOn?`<div class="qtimer"><span style="font-size:16px">⏱️</span><div class="qtimer-bar"><i id="qtBar"></i></div><span class="qtnum" id="qtNum">${QTIME}s</span></div>`:""}
