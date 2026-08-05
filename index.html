@@ -301,7 +301,7 @@ const KEY="baytee_lists_game_v1";
 let S={ name:"", points:0, streak:0, bestStreak:0, correct:0, answered:0, stage:0, unlocked:1, stars:{}, done:{}, stagePoints:{}, wrong:{}, mistakes:0, attempted:{} };
 let playing=false;
 function blankState(nm){ return { name:nm||"", points:0, streak:0, bestStreak:0, correct:0, answered:0, stage:0, unlocked:1, stars:{}, done:{}, stagePoints:{}, wrong:{}, mistakes:0, attempted:{} }; }
-function recordMistake(){ cur.mistakes=(cur.mistakes||0)+1; S.mistakes=(S.mistakes||0)+1; const k=cur.stage+"."+cur.idx; S.wrong[k]=(S.wrong[k]||0)+1; }
+function recordMistake(){ cur.mistakes=(cur.mistakes||0)+1; S.mistakes=(S.mistakes||0)+1; const k="s"+cur.stage+"q"+cur.idx; S.wrong[k]=(S.wrong[k]||0)+1; }
 const PTS_CORRECT=10, PTS_STREAK_BONUS=5, STREAK_EVERY=3, QTIME=25, SPEED_BONUS_MAX=8;
 let timerOn=localStorage.getItem("baytee_timer")==="on";
 function totalTasks(){ let n=0; STAGES.forEach(s=>n+=s.tasks.length); return n; }
@@ -489,7 +489,7 @@ function showEnd(){ submitScore();
 function submitScore(){ if(!fbReady||!S.name) return; try{ const accPct=S.answered?Math.round((S.correct/S.answered)*100):0, stars=Object.values(S.stars).reduce((a,b)=>a+b,0); db.ref("boards/"+CLASS_ID+"/"+DEVICE_ID).transaction(c=>{ const b=c||{}; return {name:S.name, points:Math.max(b.points||0,S.points), acc:accPct, stars:stars, done:Object.keys(S.done).length, mistakes:S.mistakes||0, wrong:S.wrong||{}, ts:Date.now()}; }); }catch(e){ console.warn(e.message);} }
 let boardListening=false;
 function openBoard(){ show("scBoard"); const list=$("#boardList"); if(!fbReady){ list.innerHTML=`<div class="lbempty">🔌 لوحة الصدارة غير مفعّلة.</div>`; return; } submitScore(); list.innerHTML=`<div class="lbempty">⏳ جاري تحميل الترتيب...</div>`; if(!boardListening){ boardListening=true; db.ref("boards/"+CLASS_ID).on("value", snap=>{ const d=snap.val()||{}; const arr=Object.entries(d).map(([id,v])=>({id,...v})).sort((a,b)=>(b.points-a.points)||(a.ts-b.ts)); renderBoard(arr); }, ()=>{ list.innerHTML=`<div class="lbempty">⚠️ ما قدرناش نقرا الترتيب.</div>`; }); } }
-function wrongDetail(w){ if(!w) return ""; const ks=Object.keys(w); if(!ks.length) return '<span style="color:var(--ok)">✔ بدون أغلاط</span>'; return ks.map(k=>{ const p=k.split("."); return `<span style="color:#ffb0b6">مرحلة ${(+p[0])+1}·سؤال ${(+p[1])+1}: ${w[k]}×</span>`; }).join(" · "); }
+function wrongDetail(w){ if(!w) return ""; const ks=Object.keys(w); if(!ks.length) return '<span style="color:var(--ok)">✔ بدون أغلاط</span>'; return ks.map(k=>{ const m=k.match(/s(\d+)q(\d+)/); const si=m?(+m[1])+1:'?', ti=m?(+m[2])+1:'?'; return `<span style="color:#ffb0b6">مرحلة ${si}·سؤال ${ti}: ${w[k]}×</span>`; }).join(" · "); }
 function renderBoard(arr){ const list=$("#boardList"); const isAdmin=(location.hash||"").toLowerCase().indexOf("admin")>=0;
   if(!arr.length){ list.innerHTML=`<div class="lbempty">🏁 لسه ما فيش نتايج!<br>كون أول واحد يوصل القمة 🥇</div>`; return; }
   const medals=["🥇","🥈","🥉"]; let html="";
