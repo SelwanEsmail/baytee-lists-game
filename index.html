@@ -298,7 +298,10 @@ const STAGES=[
 const RANKS=[{min:0,name:"🌱 أمين مخزن مبتدئ"},{min:40,name:"🗄️ منظّم الرفوف"},{min:60,name:"✂️ سيّد التقطيع"},{min:80,name:"🔀 خبير الترتيب"},{min:95,name:"👑 أسطورة المصفوفات"}];
 
 const KEY="baytee_lists_game_v1";
-let S={ name:"", points:0, streak:0, bestStreak:0, correct:0, answered:0, stage:0, unlocked:1, stars:{}, done:{} };
+let S={ name:"", points:0, streak:0, bestStreak:0, correct:0, answered:0, stage:0, unlocked:1, stars:{}, done:{}, stagePoints:{}, wrong:{}, mistakes:0, attempted:{} };
+let playing=false;
+function blankState(nm){ return { name:nm||"", points:0, streak:0, bestStreak:0, correct:0, answered:0, stage:0, unlocked:1, stars:{}, done:{}, stagePoints:{}, wrong:{}, mistakes:0, attempted:{} }; }
+function recordMistake(){ cur.mistakes=(cur.mistakes||0)+1; S.mistakes=(S.mistakes||0)+1; const k=cur.stage+"."+cur.idx; S.wrong[k]=(S.wrong[k]||0)+1; }
 const PTS_CORRECT=10, PTS_STREAK_BONUS=5, STREAK_EVERY=3, QTIME=25, SPEED_BONUS_MAX=8;
 let timerOn=localStorage.getItem("baytee_timer")==="on";
 function totalTasks(){ let n=0; STAGES.forEach(s=>n+=s.tasks.length); return n; }
@@ -310,7 +313,7 @@ function load(){ try{ const d=JSON.parse(localStorage.getItem(KEY)); if(d) S=Obj
 const $=s=>document.querySelector(s);
 const screens=["scStart","scMap","scPlay","scStageDone","scEnd","scBoard"];
 function show(id){ stopQTimer(); screens.forEach(x=>$("#"+x).classList.toggle("active", x===id)); $("#hud").style.display=(id==="scStart")?"none":"block"; window.scrollTo({top:0,behavior:"smooth"}); }
-function updateHUD(){ $("#hudPoints").textContent=S.points; $("#hudStreak").textContent=S.streak; $("#hudStage").textContent=Math.min(S.stage+1,5); $("#hudName").textContent=S.name||"مستكشف"; $("#hudBar").style.width=Math.round((S.answered/TOTAL_Q)*100)+"%"; $("#hudStreak").parentElement.querySelector(".n").classList.toggle("streak-fire", S.streak>=STREAK_EVERY); }
+function updateHUD(){ $("#hudPoints").textContent=S.points+(playing?cur.gained:0); $("#hudStreak").textContent=S.streak; $("#hudStage").textContent=Math.min(S.stage+1,5); $("#hudName").textContent=S.name||"مستكشف"; $("#hudBar").style.width=Math.round((Object.keys(S.done).length/STAGES.length)*100)+"%"; $("#hudStreak").parentElement.querySelector(".n").classList.toggle("streak-fire", S.streak>=STREAK_EVERY); }
 function updateTimerBtn(){ const b=$("#timerBtn"); if(!b) return; b.classList.toggle("on", timerOn); b.style.opacity=timerOn?"1":"0.45"; b.title=timerOn?"المؤقّت مُفعّل (للأسئلة) — اضغط لإيقافه":"المؤقّت متوقّف — اضغط لتشغيله"; }
 
 let soundOn=true, actx=null;
@@ -326,15 +329,15 @@ function floatCoin(x,y,txt){ const el=document.createElement("div"); el.classNam
 (function(){ const c=$("#stars"),x=c.getContext("2d"); let st=[]; function rs(){ c.width=innerWidth; c.height=innerHeight; st=Array.from({length:70},()=>({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.6+.3,a:Math.random(),s:Math.random()*.02+.005})); } function draw(){ x.clearRect(0,0,c.width,c.height); st.forEach(p=>{p.a+=p.s; const al=.3+Math.abs(Math.sin(p.a))*.7; x.beginPath(); x.arc(p.x,p.y,p.r,0,7); x.fillStyle="rgba(255,235,190,"+al+")"; x.fill();}); requestAnimationFrame(draw); } rs(); draw(); addEventListener("resize",rs); })();
 const conf=(function(){ const c=$("#confetti"),x=c.getContext("2d"); let ps=[],on=false; function rs(){ c.width=innerWidth; c.height=innerHeight; } rs(); addEventListener("resize",rs); const cols=["#ffb703","#ffd166","#e63946","#2a9d8f","#ffcf5c","#8ff0c0","#fff"]; function burst(n){ for(let i=0;i<n;i++) ps.push({x:innerWidth/2+(Math.random()-.5)*260,y:innerHeight*0.32,vx:(Math.random()-.5)*11,vy:Math.random()*-9-4,g:.28,r:Math.random()*7+4,c:cols[Math.random()*cols.length|0],rot:Math.random()*6,vr:(Math.random()-.5)*.4,life:110}); if(!on){on=true;loop();} } function loop(){ x.clearRect(0,0,c.width,c.height); ps=ps.filter(p=>p.life>0); ps.forEach(p=>{p.vy+=p.g;p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;p.life--; x.save(); x.translate(p.x,p.y); x.rotate(p.rot); x.fillStyle=p.c; x.fillRect(-p.r/2,-p.r/2,p.r,p.r*.6); x.restore();}); if(ps.length) requestAnimationFrame(loop); else on=false; } return {burst}; })();
 
-function buildMap(){ const g=$("#stagesGrid"); g.innerHTML=""; STAGES.forEach((s,i)=>{ const locked=i>S.unlocked-1, done=S.done[i], stars=S.stars[i]||0; const card=document.createElement("div"); card.className="stage-card"+(locked?" locked":"")+(done?" done":""); card.innerHTML=`<div class="stage-no">${i+1}</div>${locked?'<div class="lock-badge">🔒</div>':(done?'<div class="lock-badge">✔️</div>':'')}<div class="stage-emoji">${s.emoji}</div><h3>${s.title}</h3><div class="desc">${s.desc}</div><div class="stars">${stars?'⭐'.repeat(stars)+'☆'.repeat(3-stars):''}</div>`; if(!locked) card.onclick=()=>{ sClick(); startStage(i); }; else card.onclick=()=>toast("🔒 كمّل المرحلة اللي قبلها الأول!"); g.appendChild(card); }); }
+function buildMap(){ playing=false; const g=$("#stagesGrid"); g.innerHTML=""; STAGES.forEach((s,i)=>{ const locked=i>S.unlocked-1, done=S.done[i], retry=S.attempted[i]&&!done&&!locked, stars=S.stars[i]||0; const card=document.createElement("div"); card.className="stage-card"+(locked?" locked":"")+(done?" done":""); const badge=locked?'🔒':(done?'✔️':(retry?'⚠️':'')); card.innerHTML=`<div class="stage-no">${i+1}</div>${badge?`<div class="lock-badge">${badge}</div>`:''}<div class="stage-emoji">${s.emoji}</div><h3>${s.title}</h3><div class="desc">${retry?'⚠️ أعدها بدون أي غلطة باش تفتح اللي بعدها':s.desc}</div><div class="stars">${done?'⭐⭐⭐':(stars?'⭐'.repeat(stars)+'☆'.repeat(3-stars):'')}</div>`; if(!locked) card.onclick=()=>{ sClick(); startStage(i); }; else card.onclick=()=>toast("🔒 عدِّ المرحلة اللي قبلها بدون أي غلطة الأول!"); g.appendChild(card); }); }
 
 let qtId=null, qtFrac=1, qtAnswered=false;
 function startQTimer(){ stopQTimer(); qtFrac=1; const bar=$("#qtBar"), num=$("#qtNum"); if(!bar) return; const start=Date.now(); let last=QTIME; qtId=setInterval(()=>{ const left=Math.max(0,QTIME-(Date.now()-start)/1000); qtFrac=left/QTIME; bar.style.width=(qtFrac*100)+"%"; bar.style.background=qtFrac>0.5?"linear-gradient(90deg,#2a9d8f,#ffb703)":(qtFrac>0.25?"#ffb703":"#ff5964"); const sec=Math.ceil(left); if(num){ num.textContent=sec+"s"; num.classList.toggle("low",qtFrac<=0.25);} if(sec!==last&&sec<=5&&sec>0) beep(900,.03,"square",.05); last=sec; if(left<=0) onQTimeout(); },100); }
 function stopQTimer(){ if(qtId){ clearInterval(qtId); qtId=null; } }
 
-let cur={ stage:0, idx:0, gained:0, correctInStage:0, totalInStage:0 };
+let cur={ stage:0, idx:0, gained:0, correctInStage:0, totalInStage:0, mistakes:0 };
 let curCorrect=0, curTask=null;
-function startStage(i){ cur={ stage:i, idx:0, gained:0, correctInStage:0, totalInStage:STAGES[i].tasks.length }; S.stage=i; save(); updateHUD(); show("scPlay"); renderTask(); }
+function startStage(i){ cur={ stage:i, idx:0, gained:0, correctInStage:0, totalInStage:STAGES[i].tasks.length, mistakes:0 }; playing=true; S.stage=i; save(); updateHUD(); show("scPlay"); renderTask(); }
 function renderTask(){ const s=STAGES[cur.stage], t=s.tasks[cur.idx]; curTask=t; if(t.kind==="concept") renderQuestion(s,t); else renderInteractive(s,t); }
 function codeHTML(code){ if(!code) return ""; let h=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\b(for|in|if|else|print|append|insert|remove|pop|sort|reverse|len|max|min|sum|True|False)\b/g,m=>['append','insert','remove','pop','sort','reverse','len','max','min','sum','print'].indexOf(m)>=0?'<span class="fn">'+m+'</span>':'<span class="kw">'+m+'</span>').replace(/\b(\d+)\b/g,'<span class="num">$1</span>'); return '<div class="code">'+h+'</div>'; }
 
@@ -423,39 +426,55 @@ function scoreInteractive(correct, msg){
   if(correct){ const full=!ip.failed; let gained=full?PTS_CORRECT:Math.round(PTS_CORRECT/2);
     if(full) S.correct++; S.streak++; if(S.streak>S.bestStreak) S.bestStreak=S.streak;
     let streakTxt=""; if(S.streak%STREAK_EVERY===0){ gained+=PTS_STREAK_BONUS; streakTxt=` <span class="pts">+${PTS_STREAK_BONUS} سلسلة 🔥</span>`; }
-    S.points+=gained; cur.gained+=gained; sGood(); conf.burst(28);
+    cur.gained+=gained; sGood(); conf.burst(28);
     const anchor=$("#runBtn")||$("#fb"); if(anchor){ const r=anchor.getBoundingClientRect(); floatCoin(r.left+r.width/2, r.top, "+"+gained+" 🪙"); }
     fb.className="feedback good show"; fb.innerHTML=`<div class="fi">🎉</div><div class="ft">${full?"من أول مرة! ":"عاش، ضبطتها! "}<span class="pts">+${full?PTS_CORRECT:Math.round(PTS_CORRECT/2)}</span>${streakTxt}<br><span style="opacity:.92">${msg}</span></div>`;
     const rb=$("#runBtn"); if(rb) rb.disabled=true;
     $("#nextBtn").style.display="inline-flex"; $("#nextBtn").onclick=()=>{ sClick(); nextStep(); };
     if(S.streak>=STREAK_EVERY && S.streak%STREAK_EVERY===0) toast(`🔥 سلسلة ${S.streak}!`);
-  } else { ip.failed=true; S.streak=0; fb.className="feedback bad show"; fb.innerHTML=`<div class="fi">🤔</div><div class="ft">مش مشكلة، جرّب مرة ثانية!<br><span style="opacity:.95">${msg}</span></div>`; }
+  } else { ip.failed=true; S.streak=0; recordMistake(); fb.className="feedback bad show"; fb.innerHTML=`<div class="fi">🤔</div><div class="ft">مش مشكلة، جرّب مرة ثانية!<br><span style="opacity:.95">${msg}</span></div>`; }
   save(); updateHUD();
 }
 function scoreAnswer(correct, why, el, speed, timedOut){
   S.answered++; const fb=$("#fb");
   if(correct){ S.correct++; cur.correctInStage++; S.streak++; if(S.streak>S.bestStreak) S.bestStreak=S.streak;
     let gained=PTS_CORRECT+speed, streakTxt=""; if(S.streak%STREAK_EVERY===0){ gained+=PTS_STREAK_BONUS; streakTxt=` <span class="pts">+${PTS_STREAK_BONUS} سلسلة 🔥</span>`; }
-    S.points+=gained; cur.gained+=gained; sGood(); conf.burst(24);
+    cur.gained+=gained; sGood(); conf.burst(24);
     if(el){ const r=el.getBoundingClientRect(); floatCoin(r.left+r.width/2, r.top, "+"+gained+" 🪙"); }
     fb.className="feedback good show"; fb.innerHTML=`<div class="fi">🎉</div><div class="ft">${["عاش عليك!","أحسنت يا بطل!","تمام صح!","برافو!"][Math.random()*4|0]} <span class="pts">+${PTS_CORRECT}</span>${speed>0?` <span class="pts">+${speed} سرعة ⚡</span>`:""}${streakTxt}<br><span style="opacity:.92">${why}</span></div>`;
     if(S.streak>=STREAK_EVERY && S.streak%STREAK_EVERY===0) toast(`🔥 سلسلة ${S.streak}!`);
-  } else { S.streak=0; sBad(); fb.className="feedback bad show"; const head=timedOut?"⏰ خلص الوقت!":"مش مشكلة، من الغلطة نتعلّموا:"; fb.innerHTML=`<div class="fi">${timedOut?"⏰":"💡"}</div><div class="ft">${head}<br><span style="opacity:.95">${why}</span></div>`; }
+  } else { S.streak=0; recordMistake(); sBad(); fb.className="feedback bad show"; const head=timedOut?"⏰ خلص الوقت!":"مش مشكلة، من الغلطة نتعلّموا:"; fb.innerHTML=`<div class="fi">${timedOut?"⏰":"💡"}</div><div class="ft">${head}<br><span style="opacity:.95">${why}</span></div>`; }
   save(); updateHUD();
 }
 
 function nextStep(){ cur.idx++; if(cur.idx<cur.totalInStage){ show("scPlay"); renderTask(); return; } finishStage(); }
 function finishStage(){
-  const i=cur.stage, total=cur.totalInStage; const maxStage=total*PTS_CORRECT; const ratio=Math.min(1, cur.gained/Math.max(1,maxStage));
-  const stars= ratio>=0.9?3: ratio>=0.6?2:1;
-  if((S.stars[i]||0)<stars) S.stars[i]=stars; S.done[i]=true; if(S.unlocked<i+2) S.unlocked=Math.min(i+2,STAGES.length);
-  save(); updateHUD(); submitScore(); sWin(); conf.burst(70);
-  $("#stageDoneStars").textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars); $("#stageDoneTitle").textContent=`كمّلت مرحلة: ${STAGES[i].title}!`;
-  const msgs=["بايتي رتّب جزء من رفوفه بفضلك! 🗄️","عاش! المخزن بقا أنظم 🚀","خطوة سمحة، بايتي يلقى كنوزه بسرعة ✨"];
-  $("#stageDoneMsg").textContent=(i<STAGES.length-1)?msgs[i%msgs.length]:"بايتي نظّم كل المخزن بفضلك! 🎊";
-  $("#stageDonePts").textContent=cur.gained;
-  const last=i>=STAGES.length-1; $("#nextStageBtn").textContent=last?"🏆 شوف نتيجتك":"المرحلة التالية ▶";
-  $("#nextStageBtn").onclick=()=>{ sClick(); if(last) showEnd(); else { const nx=i+1; if(nx<=S.unlocked-1) startStage(nx); else { buildMap(); show("scMap"); } } };
+  const i=cur.stage; playing=false;
+  const perfect = (cur.mistakes||0)===0;
+  const old=S.stagePoints[i]||0;                       // نقاط أفضل محاولة (ما تتضخّمش بالإعادة)
+  if(cur.gained>old){ S.points += (cur.gained-old); S.stagePoints[i]=cur.gained; }
+  if(perfect){ S.done[i]=true; S.stars[i]=3; if(S.unlocked<i+2) S.unlocked=Math.min(i+2,STAGES.length); }
+  else { S.attempted[i]=true; }
+  save(); updateHUD(); submitScore();
+  const last=i>=STAGES.length-1;
+  if(perfect){
+    sWin(); conf.burst(70);
+    $("#stageDoneStars").textContent='⭐⭐⭐';
+    $("#stageDoneTitle").textContent=`أتقنت مرحلة: ${STAGES[i].title}! 💯`;
+    const msgs=["نظيفة 100%! بايتي رتّب رفوفه بدون غلطة 🗄️","عاش! مرحلة كاملة بدون أي غلطة 🚀","المخزن يلمع — صفر أغلاط ✨"];
+    $("#stageDoneMsg").textContent=(i<STAGES.length-1)?msgs[i%msgs.length]:"بايتي نظّم كل المخزن بدون غلطة! 🎊";
+    $("#stageDonePts").textContent=cur.gained;
+    $("#nextStageBtn").textContent=last?"🏆 شوف نتيجتك":"المرحلة التالية ▶";
+    $("#nextStageBtn").onclick=()=>{ sClick(); if(last) showEnd(); else { const nx=i+1; if(nx<=S.unlocked-1) startStage(nx); else { buildMap(); show("scMap"); } } };
+  } else {
+    sBad();
+    $("#stageDoneStars").textContent='⚠️';
+    $("#stageDoneTitle").textContent=`غلطت ${cur.mistakes} ${cur.mistakes===1?'غلطة':'أغلاط'} في المرحلة`;
+    $("#stageDoneMsg").innerHTML=`عشان تفتح المرحلة الجاية لازم تعدّي هذي <b>بدون أي غلطة (100%)</b>. حاول مرة ثانية — تقدر عليها! 💪`;
+    $("#stageDonePts").textContent=cur.gained;
+    $("#nextStageBtn").textContent="🔁 أعد المرحلة";
+    $("#nextStageBtn").onclick=()=>{ sClick(); startStage(i); };
+  }
   show("scStageDone");
 }
 function showEnd(){ submitScore();
@@ -467,16 +486,26 @@ function showEnd(){ submitScore();
   show("scEnd"); sWin(); let n=0; const iv=setInterval(()=>{ conf.burst(50); if(++n>=4) clearInterval(iv); },500);
 }
 
-function submitScore(){ if(!fbReady||!S.name) return; try{ const accPct=S.answered?Math.round((S.correct/S.answered)*100):0, stars=Object.values(S.stars).reduce((a,b)=>a+b,0); db.ref("boards/"+CLASS_ID+"/"+DEVICE_ID).transaction(c=>{ if(c&&c.points>=S.points) return c; return {name:S.name,points:S.points,acc:accPct,stars:stars,done:Object.keys(S.done).length,ts:Date.now()}; }); }catch(e){ console.warn(e.message);} }
+function submitScore(){ if(!fbReady||!S.name) return; try{ const accPct=S.answered?Math.round((S.correct/S.answered)*100):0, stars=Object.values(S.stars).reduce((a,b)=>a+b,0); db.ref("boards/"+CLASS_ID+"/"+DEVICE_ID).transaction(c=>{ const b=c||{}; return {name:S.name, points:Math.max(b.points||0,S.points), acc:accPct, stars:stars, done:Object.keys(S.done).length, mistakes:S.mistakes||0, wrong:S.wrong||{}, ts:Date.now()}; }); }catch(e){ console.warn(e.message);} }
 let boardListening=false;
 function openBoard(){ show("scBoard"); const list=$("#boardList"); if(!fbReady){ list.innerHTML=`<div class="lbempty">🔌 لوحة الصدارة غير مفعّلة.</div>`; return; } submitScore(); list.innerHTML=`<div class="lbempty">⏳ جاري تحميل الترتيب...</div>`; if(!boardListening){ boardListening=true; db.ref("boards/"+CLASS_ID).on("value", snap=>{ const d=snap.val()||{}; const arr=Object.entries(d).map(([id,v])=>({id,...v})).sort((a,b)=>(b.points-a.points)||(a.ts-b.ts)); renderBoard(arr); }, ()=>{ list.innerHTML=`<div class="lbempty">⚠️ ما قدرناش نقرا الترتيب.</div>`; }); } }
-function renderBoard(arr){ const list=$("#boardList"); if(!arr.length){ list.innerHTML=`<div class="lbempty">🏁 لسه ما فيش نتايج!<br>كون أول واحد يوصل القمة 🥇</div>`; return; } const medals=["🥇","🥈","🥉"]; let html=""; arr.forEach((p,i)=>{ const me=p.id===DEVICE_ID, cls="lbrow"+(me?" me":"")+(i===0?" top1":""), rank=i<3?medals[i]:(i+1); html+=`<div class="${cls}"><div class="lbrank">${rank}</div><div style="flex:1; min-width:0;"><div class="lbname">${escapeHTML(p.name||"مستكشف")}${me?'<span class="metag">أنت</span>':''}</div><div class="lbmeta">دقّة ${p.acc||0}% · ⭐${p.stars||0} · ${p.done||0}/5 مراحل</div></div><div class="lbpts">${p.points}<small> نقطة</small></div></div>`; }); const myRank=arr.findIndex(p=>p.id===DEVICE_ID)+1; $("#boardSub").innerHTML=myRank>0?`ترتيبك الحين: <b style="color:var(--gold2)">#${myRank}</b> من ${arr.length} — يتحدّث مباشرة!`:`${arr.length} مشارك — يتحدّث مباشرة!`; list.innerHTML=html; }
+function wrongDetail(w){ if(!w) return ""; const ks=Object.keys(w); if(!ks.length) return '<span style="color:var(--ok)">✔ بدون أغلاط</span>'; return ks.map(k=>{ const p=k.split("."); return `<span style="color:#ffb0b6">مرحلة ${(+p[0])+1}·سؤال ${(+p[1])+1}: ${w[k]}×</span>`; }).join(" · "); }
+function renderBoard(arr){ const list=$("#boardList"); const isAdmin=(location.hash||"").toLowerCase().indexOf("admin")>=0;
+  if(!arr.length){ list.innerHTML=`<div class="lbempty">🏁 لسه ما فيش نتايج!<br>كون أول واحد يوصل القمة 🥇</div>`; return; }
+  const medals=["🥇","🥈","🥉"]; let html="";
+  if(isAdmin){ const clean=arr.slice().sort((a,b)=>((a.mistakes||0)-(b.mistakes||0))||((b.points||0)-(a.points||0)))[0];
+    html+=`<div class="goalbox" style="background:rgba(46,204,113,.14);border-color:var(--ok);text-align:right;direction:rtl">🏅 <b>الأنظف:</b> ${escapeHTML(clean.name||"—")} — <b>${clean.mistakes||0}</b> أغلاط · <b>${clean.points||0}</b> نقطة<br><span style="font-size:12px;color:#c3b58f">وضع المعلّم: يبان لكل طالب عدد أغلاطه ووين غلط بالضبط 👇</span></div>`;
+  }
+  arr.forEach((p,i)=>{ const me=p.id===DEVICE_ID, cls="lbrow"+(me?" me":"")+(i===0?" top1":""), rank=i<3?medals[i]:(i+1);
+    const adminLine = isAdmin?`<div class="lbmeta" style="margin-top:4px">❌ <b style="color:#ff9aa0">${p.mistakes||0}</b> أغلاط · ${wrongDetail(p.wrong)}</div>`:"";
+    html+=`<div class="${cls}"><div class="lbrank">${rank}</div><div style="flex:1; min-width:0;"><div class="lbname">${escapeHTML(p.name||"مستكشف")}${me?'<span class="metag">أنت</span>':''}</div><div class="lbmeta">⭐${p.stars||0} · ${p.done||0}/5 مراحل متقنة</div>${adminLine}</div><div class="lbpts">${p.points}<small> نقطة</small></div></div>`; });
+  const myRank=arr.findIndex(p=>p.id===DEVICE_ID)+1; $("#boardSub").innerHTML=myRank>0?`ترتيبك الحين: <b style="color:var(--gold2)">#${myRank}</b> من ${arr.length} — يتحدّث مباشرة!`:`${arr.length} مشارك — يتحدّث مباشرة!`; list.innerHTML=html; }
 function escapeHTML(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function adminReset(){ if(!fbReady){ toast("🔌 لوحة الصدارة غير مفعّلة"); return; } const pin=prompt("🔑 أدخل رمز المعلّم لمسح كل النتايج:"); if(pin===null) return; if(pin!==ADMIN_PIN){ toast("❌ رمز غير صحيح"); sBad(); return; } if(!confirm("⚠️ متأكد؟\nبيتم مسح كل نتايج الطلاب نهائياً ويبدا التسجيل من جديد.")) return; db.ref("boards/"+CLASS_ID).once("value").then(snap=>{ const d=snap.val()||{}, keys=Object.keys(d); if(!keys.length){ toast("🤷 ما فيش نتايج نمسحوها"); return; } const up={}; keys.forEach(k=>up[k]=null); db.ref("boards/"+CLASS_ID).update(up).then(()=>{ toast("🗑️ تم مسح كل النتايج! جولة جديدة 🎉"); sWin(); conf.burst(40); }).catch(e=>toast("تعذّر المسح: "+e.message)); }).catch(e=>toast("خطأ: "+e.message)); }
 
 function refreshStartUI(){ const has=S.name||S.points>0||Object.keys(S.done).length>0; $("#resetBtn").style.display=has?"inline-flex":"none"; if(S.name) $("#nameInput").value=S.name; if(has){ $("#resumeNote").style.display="block"; $("#resumeNote").innerHTML=`👋 مرحباً برجوعك <b>${S.name||"مستكشف"}</b>! عندك <b>${S.points}</b> نقطة، ووصلت للمرحلة <b>${Math.min(S.unlocked,5)}</b>.`; $("#startBtn").textContent="▶ كمّل المغامرة"; } else { $("#resumeNote").style.display="none"; $("#startBtn").textContent="🎮 يالله نبدو"; } }
 $("#startBtn").onclick=()=>{ sClick(); const nm=$("#nameInput").value.trim(); if(nm) S.name=nm; if(!S.name){ toast("✍️ اكتب اسمك الأول!"); $("#nameInput").focus(); return; } save(); updateHUD(); buildMap(); show("scMap"); };
-$("#resetBtn").onclick=()=>{ if(confirm("متأكد تبي تبدا من جديد؟ بتنمسح كل نقاطك وتقدّمك.")){ localStorage.removeItem(KEY); S={ name:"",points:0,streak:0,bestStreak:0,correct:0,answered:0,stage:0,unlocked:1,stars:{},done:{} }; $("#nameInput").value=""; refreshStartUI(); updateHUD(); toast("🔄 بداية جديدة!"); } };
+$("#resetBtn").onclick=()=>{ if(confirm("متأكد تبي تبدا من جديد؟ بتنمسح كل نقاطك وتقدّمك.")){ localStorage.removeItem(KEY); S=blankState(""); $("#nameInput").value=""; refreshStartUI(); updateHUD(); toast("🔄 بداية جديدة!"); } };
 $("#toStartBtn").onclick=()=>{ sClick(); refreshStartUI(); show("scStart"); };
 $("#backMapBtn").onclick=()=>{ sClick(); buildMap(); show("scMap"); };
 $("#endMapBtn").onclick=()=>{ sClick(); buildMap(); show("scMap"); };
@@ -484,7 +513,7 @@ $("#mapBoardBtn").onclick=()=>{ sClick(); openBoard(); };
 $("#endBoardBtn").onclick=()=>{ sClick(); openBoard(); };
 $("#boardBtn").onclick=()=>{ sClick(); openBoard(); };
 $("#boardBackBtn").onclick=()=>{ sClick(); buildMap(); show("scMap"); };
-$("#playAgainBtn").onclick=()=>{ if(confirm("تبي تلعب من جديد وتصفّر النقاط؟")){ const nm=S.name; localStorage.removeItem(KEY); S={ name:nm,points:0,streak:0,bestStreak:0,correct:0,answered:0,stage:0,unlocked:1,stars:{},done:{} }; save(); updateHUD(); buildMap(); show("scMap"); } };
+$("#playAgainBtn").onclick=()=>{ if(confirm("تبي تلعب من جديد وتصفّر النقاط؟")){ const nm=S.name; localStorage.removeItem(KEY); S=blankState(nm); save(); updateHUD(); buildMap(); show("scMap"); } };
 $("#soundBtn").onclick=()=>{ soundOn=!soundOn; $("#soundBtn").textContent=soundOn?"🔊":"🔇"; if(soundOn) sClick(); };
 $("#timerBtn").onclick=()=>{ timerOn=!timerOn; localStorage.setItem("baytee_timer", timerOn?"on":"off"); updateTimerBtn(); sClick(); toast(timerOn?"⏱️ المؤقّت اشتغل (للأسئلة)":"⏸️ المؤقّت وقف"); };
 $("#adminResetBtn").onclick=()=>{ sClick(); adminReset(); };
