@@ -102,6 +102,20 @@ h1.title{font-size:31px; line-height:1.35; margin:16px 0 6px; font-weight:900; t
 #confetti{position:fixed; inset:0; z-index:50; pointer-events:none;}
 .floatCoin{position:fixed; z-index:55; font-size:24px; pointer-events:none; font-weight:900; animation:coinUp 1s ease forwards;} @keyframes coinUp{0%{opacity:0; transform:translateY(0) scale(.5)}20%{opacity:1}100%{opacity:0; transform:translateY(-90px) scale(1.3)}}
 @media(max-width:560px){ h1.title{font-size:23px;} .qtext{font-size:18px;} .baytee{width:120px;} .slot{width:64px;} .statgrid{grid-template-columns:1fr;} .btn{font-size:17px; padding:14px 26px;} }
+.cert-modal{display:none; position:fixed; inset:0; z-index:200; background:rgba(4,10,20,.92); backdrop-filter:blur(6px); overflow:auto; padding:20px;}
+.cert-modal.show{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;}
+.cert-paper{background:linear-gradient(160deg,#fffdf5,#fdf1d3); color:#2a2008; width:min(640px,94vw); border-radius:18px; padding:32px 28px; text-align:center; border:6px double #c9a227; box-shadow:0 20px 60px rgba(0,0,0,.5); position:relative;}
+.cert-emblem{font-size:50px;}
+.cert-top{font-size:27px; font-weight:900; color:#b8860b; margin-top:2px;}
+.cert-acad{font-size:13px; color:#7a6a2f; margin:4px 0 16px; font-weight:800;}
+.cert-line{font-size:16px; color:#4a3f1e; margin:5px 0;}
+.cert-name{font-size:32px; font-weight:900; color:#1d3557; margin:8px 0; padding:4px 18px 6px; border-bottom:3px dashed #c9a227; display:inline-block;}
+.cert-game{font-size:21px; font-weight:900; color:#b8860b; margin:8px 0 12px;}
+.cert-stats{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin:10px 0;}
+.cert-stats span{background:#fff6da; border:1px solid #e6cd7a; border-radius:10px; padding:6px 12px; font-weight:800; color:#2a2008; font-size:14px;}
+.cert-foot{display:flex; justify-content:space-between; margin-top:22px; font-size:13px; color:#6a5a2f; font-weight:800;}
+.cert-actions{display:flex; gap:12px; flex-wrap:wrap; justify-content:center;}
+@media print{ body>*:not(#certModal){display:none!important;} #certModal{position:absolute; inset:0; background:#fff; padding:0;} #certModal.show{display:block;} .cert-actions{display:none!important;} .cert-paper{box-shadow:none; width:100%; max-width:720px; margin:16px auto;} }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -219,6 +233,7 @@ h1.title{font-size:31px; line-height:1.35; margin:16px 0 6px; font-weight:900; t
       </div>
       <div class="badges" id="endBadges"></div>
       <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:16px;">
+        <button class="btn" id="endCertBtn">📜 شهادتك</button>
         <button class="btn" id="endBoardBtn">🏆 لوحة الصدارة</button>
         <button class="btn ghost sm" id="playAgainBtn">🔁 العب من جديد</button>
         <button class="btn ghost sm" id="endMapBtn">🗺️ الخريطة</button>
@@ -523,6 +538,38 @@ function refreshAdminUI(){ const a=(location.hash||"").toLowerCase().indexOf("ad
 window.addEventListener("hashchange",refreshAdminUI);
 $("#nameInput").addEventListener("keydown",e=>{ if(e.key==="Enter") $("#startBtn").click(); });
 load(); refreshStartUI(); refreshAdminUI(); updateHUD(); updateTimerBtn();
+
+/* ===== شهادة الإتمام ===== */
+const GAME_TITLE="المصفوفات (القوائم) 🗄️";
+function openCert(){
+  $("#certName").textContent=S.name||"مستكشف";
+  $("#certGame").textContent=GAME_TITLE;
+  const pct=Math.min(100,Math.round((S.points/MAX_POINTS)*100));
+  let rk=RANKS[0]; RANKS.forEach(r=>{ if(pct>=r.min) rk=r; });
+  const totalStars=Object.values(S.stars).reduce((a,b)=>a+b,0);
+  $("#certStats").innerHTML=`<span>🪙 ${S.points} نقطة</span><span>${rk.name}</span><span>⭐ ${totalStars}/15</span>`;
+  const d=new Date(); $("#certDate").textContent=d.getDate()+"/"+(d.getMonth()+1)+"/"+d.getFullYear();
+  $("#certModal").classList.add("show");
+}
+$("#certCloseBtn").onclick=()=>$("#certModal").classList.remove("show");
+$("#endCertBtn").onclick=()=>{ sClick(); openCert(); };
 </script>
+<div id="certModal" class="cert-modal">
+  <div class="cert-paper" id="certPaper">
+    <div class="cert-emblem">🤖🏆</div>
+    <div class="cert-top">شهادة إتمام</div>
+    <div class="cert-acad">أكاديمية عالم بايتي · نتعلّم البرمجة باللعب</div>
+    <div class="cert-line">تشهد <b>المهندسة سلوان</b> بأنّ المستكشف</div>
+    <div class="cert-name" id="certName">—</div>
+    <div class="cert-line">أتمّ بنجاح لعبة</div>
+    <div class="cert-game" id="certGame">—</div>
+    <div class="cert-stats" id="certStats"></div>
+    <div class="cert-foot"><div>📅 <span id="certDate"></span></div><div>✒️ توقيع: المهندسة سلوان</div></div>
+  </div>
+  <div class="cert-actions">
+    <button class="btn" onclick="window.print()">🖨️ اطبع / احفظ PDF</button>
+    <button class="btn ghost sm" id="certCloseBtn">إغلاق ✖</button>
+  </div>
+</div>
 </body>
 </html>
