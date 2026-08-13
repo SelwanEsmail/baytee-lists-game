@@ -505,9 +505,9 @@ function showEnd(){ submitScore();
   show("scEnd"); sWin(); let n=0; const iv=setInterval(()=>{ conf.burst(50); if(++n>=4) clearInterval(iv); },500);
 }
 
-function submitScore(){ if(!fbReady||!S.name) return; try{ const accPct=S.answered?Math.round((S.correct/S.answered)*100):0, stars=Object.values(S.stars).reduce((a,b)=>a+b,0); db.ref("boards/"+CLASS_ID+"/"+DEVICE_ID).transaction(c=>{ const b=c||{}; return {name:S.name, points:Math.max(b.points||0,S.points), acc:accPct, stars:stars, done:Object.keys(S.done).length, mistakes:S.mistakes||0, wrong:S.wrong||{}, ts:Date.now()}; }); }catch(e){ console.warn(e.message);} }
+function submitScore(){ if(!fbReady||!S.name) return; try{ const accPct=S.answered?Math.round((S.correct/S.answered)*100):0, stars=Object.values(S.stars).reduce((a,b)=>a+b,0); db.ref("boards/"+CLASS_ID+"/"+DEVICE_ID).transaction(c=>{ const b=c||{}; return {name:S.name, points:S.points, acc:accPct, stars:stars, done:Object.keys(S.done).length, mistakes:S.mistakes||0, wrong:S.wrong||{}, ts:Date.now()}; }); }catch(e){ console.warn(e.message);} }
 let boardListening=false;
-function openBoard(){ show("scBoard"); const list=$("#boardList"); if(!fbReady){ list.innerHTML=`<div class="lbempty">🔌 لوحة الصدارة غير مفعّلة.</div>`; return; } submitScore(); list.innerHTML=`<div class="lbempty">⏳ جاري تحميل الترتيب...</div>`; if(!boardListening){ boardListening=true; db.ref("boards/"+CLASS_ID).on("value", snap=>{ const d=snap.val()||{}; const arr=Object.entries(d).map(([id,v])=>({id,...v})).sort((a,b)=>(b.points-a.points)||(a.ts-b.ts)); renderBoard(arr); }, ()=>{ list.innerHTML=`<div class="lbempty">⚠️ ما قدرناش نقرا الترتيب.</div>`; }); } }
+function openBoard(){ show("scBoard"); const list=$("#boardList"); if(!fbReady){ list.innerHTML=`<div class="lbempty">🔌 لوحة الصدارة غير مفعّلة.</div>`; return; } submitScore(); list.innerHTML=`<div class="lbempty">⏳ جاري تحميل الترتيب...</div>`; if(!boardListening){ boardListening=true; db.ref("boards/"+CLASS_ID).on("value", snap=>{ const d=snap.val()||{}; const arr=Object.entries(d).map(([id,v])=>({id,...v})).sort((a,b)=>((a.mistakes||0)-(b.mistakes||0))||((b.done||0)-(a.done||0))||((b.points||0)-(a.points||0))); renderBoard(arr); }, ()=>{ list.innerHTML=`<div class="lbempty">⚠️ ما قدرناش نقرا الترتيب.</div>`; }); } }
 function wrongDetail(w){ if(!w) return ""; const ks=Object.keys(w); if(!ks.length) return '<span style="color:var(--ok)">✔ بدون أغلاط</span>'; return ks.map(k=>{ const m=k.match(/s(\d+)q(\d+)/); const si=m?(+m[1])+1:'?', ti=m?(+m[2])+1:'?'; return `<span style="color:#ffb0b6">مرحلة ${si}·سؤال ${ti}: ${w[k]}×</span>`; }).join(" · "); }
 function renderBoard(arr){ const list=$("#boardList"); const isAdmin=(location.hash||"").toLowerCase().indexOf("admin")>=0;
   if(!arr.length){ list.innerHTML=`<div class="lbempty">🏁 لسه ما فيش نتايج!<br>كون أول واحد يوصل القمة 🥇</div>`; return; }
@@ -532,7 +532,7 @@ $("#mapBoardBtn").onclick=()=>{ sClick(); openBoard(); };
 $("#endBoardBtn").onclick=()=>{ sClick(); openBoard(); };
 $("#boardBtn").onclick=()=>{ sClick(); openBoard(); };
 $("#boardBackBtn").onclick=()=>{ sClick(); buildMap(); show("scMap"); };
-$("#playAgainBtn").onclick=()=>{ if(confirm("تبي تلعب من جديد وتصفّر النقاط؟")){ const nm=S.name; localStorage.removeItem(KEY); S=blankState(nm); save(); updateHUD(); buildMap(); show("scMap"); } };
+$("#playAgainBtn").onclick=()=>{ if(confirm("تبي تلعب من جديد وتصفّر النقاط؟")){ const nm=S.name,_mk=S.mistakes||0,_wr=S.wrong||{}; localStorage.removeItem(KEY); S=blankState(nm); S.mistakes=_mk; S.wrong=_wr; save(); updateHUD(); buildMap(); show("scMap"); } };
 $("#soundBtn").onclick=()=>{ soundOn=!soundOn; $("#soundBtn").textContent=soundOn?"🔊":"🔇"; if(soundOn) sClick(); };
 $("#timerBtn").onclick=()=>{ timerOn=!timerOn; localStorage.setItem("baytee_timer", timerOn?"on":"off"); updateTimerBtn(); sClick(); toast(timerOn?"⏱️ المؤقّت اشتغل (للأسئلة)":"⏸️ المؤقّت وقف"); };
 $("#adminResetBtn").onclick=()=>{ sClick(); adminReset(); };
