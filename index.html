@@ -115,7 +115,11 @@ h1.title{font-size:31px; line-height:1.35; margin:16px 0 6px; font-weight:900; t
 .cert-stats span{background:#fff6da; border:1px solid #e6cd7a; border-radius:10px; padding:6px 12px; font-weight:800; color:#2a2008; font-size:14px;}
 .cert-foot{display:flex; justify-content:space-between; margin-top:22px; font-size:13px; color:#6a5a2f; font-weight:800;}
 .cert-actions{display:flex; gap:12px; flex-wrap:wrap; justify-content:center;}
-@media print{ body>*:not(#certModal){display:none!important;} #certModal{position:absolute; inset:0; background:#fff; padding:0;} #certModal.show{display:block;} .cert-actions{display:none!important;} .cert-paper{box-shadow:none; width:100%; max-width:720px; margin:16px auto;} }
+.rep-item{background:#fff8e6; border:1px solid #e6cd7a; border-radius:12px; padding:12px 14px; margin:10px 0; text-align:right;}
+.rep-loc{font-size:12px; font-weight:900; color:#7a6a2f; margin-bottom:6px;} .rep-n{color:#c0392b;}
+.rep-q{font-size:16px; font-weight:900; color:#1d3557; margin:4px 0 8px; white-space:pre-wrap; line-height:1.7; direction:rtl;}
+.rep-ln{font-size:15px; margin:3px 0; color:#2a2008; font-weight:700;} .rep-lbl{font-weight:900;} .rep-lbl.bad{color:#c0392b;} .rep-lbl.ok{color:#1a7f4a;}
+@media print{ body>*:not(#certModal):not(#reportModal){display:none!important;} #certModal,#reportModal{position:absolute; inset:0; background:#fff; padding:0;} #certModal.show,#reportModal.show{display:block;} .cert-actions{display:none!important;} .cert-paper{box-shadow:none; width:100%; max-width:720px; margin:16px auto;} }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -319,7 +323,8 @@ const KEY="baytee_lists_game_v1";
 let S={ name:"", points:0, streak:0, bestStreak:0, correct:0, answered:0, stage:0, unlocked:1, stars:{}, done:{}, stagePoints:{}, wrong:{}, mistakes:0, attempted:{} };
 let playing=false;
 function blankState(nm){ return { name:nm||"", points:0, streak:0, bestStreak:0, correct:0, answered:0, stage:0, unlocked:1, stars:{}, done:{}, stagePoints:{}, wrong:{}, mistakes:0, attempted:{} }; }
-function recordMistake(){ cur.mistakes=(cur.mistakes||0)+1; S.mistakes=(S.mistakes||0)+1; const k="s"+cur.stage+"q"+cur.idx; S.wrong[k]=(S.wrong[k]||0)+1; }
+function stripHtml(s){ return String(s||"").replace(/<[^>]+>/g,"").replace(/\s+/g," ").trim(); }
+function logMistake(qText, correct, chose){ cur.mistakes=(cur.mistakes||0)+1; S.mistakes=(S.mistakes||0)+1; const k="s"+cur.stage+"q"+cur.idx; let e=S.wrong[k]; if(!e||typeof e!=="object") e={q:qText||"", correct:correct||"", chose:[], n:0}; e.n++; if(chose){ e.chose.push(chose); if(e.chose.length>6) e.chose=e.chose.slice(-6); } if(qText&&!e.q) e.q=qText; if(correct&&!e.correct) e.correct=correct; S.wrong[k]=e; }
 const PTS_CORRECT=10, PTS_STREAK_BONUS=5, STREAK_EVERY=3, QTIME=25, SPEED_BONUS_MAX=8;
 let timerOn=localStorage.getItem("baytee_timer")==="on";
 function totalTasks(){ let n=0; STAGES.forEach(s=>n+=s.tasks.length); return n; }
@@ -378,10 +383,11 @@ function answerMCQ(el){ if(qtAnswered) return; qtAnswered=true; stopQTimer();
   document.querySelectorAll("#playCard .opt").forEach(o=>o.classList.add("disabled"));
   const correct=(+el.dataset.i)===curCorrect;
   document.querySelectorAll("#playCard .opt").forEach(o=>{ if(+o.dataset.i===curCorrect) o.classList.add("correct"); else if(o===el) o.classList.add("wrong"); });
+  if(!correct){ const qt=curTask.q+(curTask.code?("\n"+curTask.code):""); const corr=curTask.opts?curTask.opts[curCorrect]:(curCorrect===1?"صح":"غلط"); const cho=curTask.opts?curTask.opts[+el.dataset.i]:((+el.dataset.i)===1?"صح":"غلط"); logMistake(qt, corr, cho); }
   scoreAnswer(correct, curTask.why, el, timerOn?Math.round(qtFrac*SPEED_BONUS_MAX):0, false);
   $("#nextBtn").style.display="inline-flex"; $("#nextBtn").onclick=()=>{ sClick(); nextStep(); };
 }
-function onQTimeout(){ if(qtAnswered) return; qtAnswered=true; stopQTimer(); document.querySelectorAll("#playCard .opt").forEach(o=>{ o.classList.add("disabled"); if(+o.dataset.i===curCorrect) o.classList.add("correct"); }); scoreAnswer(false, curTask.why, null, 0, true); $("#nextBtn").style.display="inline-flex"; $("#nextBtn").onclick=()=>{ sClick(); nextStep(); }; }
+function onQTimeout(){ if(qtAnswered) return; qtAnswered=true; stopQTimer(); document.querySelectorAll("#playCard .opt").forEach(o=>{ o.classList.add("disabled"); if(+o.dataset.i===curCorrect) o.classList.add("correct"); }); { const qt=curTask.q+(curTask.code?("\n"+curTask.code):""); const corr=curTask.opts?curTask.opts[curCorrect]:(curCorrect===1?"صح":"غلط"); logMistake(qt, corr, "⏰ انتهى الوقت"); } scoreAnswer(false, curTask.why, null, 0, true); $("#nextBtn").style.display="inline-flex"; $("#nextBtn").onclick=()=>{ sClick(); nextStep(); }; }
 
 /* ===== المهام التفاعلية ===== */
 let ip=null;
@@ -451,7 +457,7 @@ function scoreInteractive(correct, msg){
     const rb=$("#runBtn"); if(rb) rb.disabled=true;
     $("#nextBtn").style.display="inline-flex"; $("#nextBtn").onclick=()=>{ sClick(); nextStep(); };
     if(S.streak>=STREAK_EVERY && S.streak%STREAK_EVERY===0) toast(`🔥 سلسلة ${S.streak}!`);
-  } else { ip.failed=true; S.streak=0; recordMistake(); fb.className="feedback bad show"; fb.innerHTML=`<div class="fi">🤔</div><div class="ft">مش مشكلة، جرّب مرة ثانية!<br><span style="opacity:.95">${msg}</span></div>`; }
+  } else { ip.failed=true; S.streak=0; logMistake(stripHtml(curTask&&curTask.prompt||""),"",stripHtml(msg)); fb.className="feedback bad show"; fb.innerHTML=`<div class="fi">🤔</div><div class="ft">مش مشكلة، جرّب مرة ثانية!<br><span style="opacity:.95">${msg}</span></div>`; }
   save(); updateHUD();
 }
 function scoreAnswer(correct, why, el, speed, timedOut){
@@ -462,7 +468,7 @@ function scoreAnswer(correct, why, el, speed, timedOut){
     if(el){ const r=el.getBoundingClientRect(); floatCoin(r.left+r.width/2, r.top, "+"+gained+" 🪙"); }
     fb.className="feedback good show"; fb.innerHTML=`<div class="fi">🎉</div><div class="ft">${["عاش عليك!","أحسنت يا بطل!","تمام صح!","برافو!"][Math.random()*4|0]} <span class="pts">+${PTS_CORRECT}</span>${speed>0?` <span class="pts">+${speed} سرعة ⚡</span>`:""}${streakTxt}<br><span style="opacity:.92">${why}</span></div>`;
     if(S.streak>=STREAK_EVERY && S.streak%STREAK_EVERY===0) toast(`🔥 سلسلة ${S.streak}!`);
-  } else { S.streak=0; recordMistake(); sBad(); fb.className="feedback bad show"; const head=timedOut?"⏰ خلص الوقت!":"مش مشكلة، من الغلطة نتعلّموا:"; fb.innerHTML=`<div class="fi">${timedOut?"⏰":"💡"}</div><div class="ft">${head}<br><span style="opacity:.95">${why}</span></div>`; }
+  } else { S.streak=0; sBad(); fb.className="feedback bad show"; const head=timedOut?"⏰ خلص الوقت!":"مش مشكلة، من الغلطة نتعلّموا:"; fb.innerHTML=`<div class="fi">${timedOut?"⏰":"💡"}</div><div class="ft">${head}<br><span style="opacity:.95">${why}</span></div>`; }
   save(); updateHUD();
 }
 
@@ -508,18 +514,33 @@ function showEnd(){ submitScore();
 function submitScore(){ if(!fbReady||!S.name) return; try{ const accPct=S.answered?Math.round((S.correct/S.answered)*100):0, stars=Object.values(S.stars).reduce((a,b)=>a+b,0); db.ref("boards/"+CLASS_ID+"/"+DEVICE_ID).transaction(c=>{ const b=c||{}; return {name:S.name, points:S.points, acc:accPct, stars:stars, done:Object.keys(S.done).length, mistakes:S.mistakes||0, wrong:S.wrong||{}, ts:Date.now()}; }); }catch(e){ console.warn(e.message);} }
 let boardListening=false;
 function openBoard(){ show("scBoard"); const list=$("#boardList"); if(!fbReady){ list.innerHTML=`<div class="lbempty">🔌 لوحة الصدارة غير مفعّلة.</div>`; return; } submitScore(); list.innerHTML=`<div class="lbempty">⏳ جاري تحميل الترتيب...</div>`; if(!boardListening){ boardListening=true; db.ref("boards/"+CLASS_ID).on("value", snap=>{ const d=snap.val()||{}; const arr=Object.entries(d).map(([id,v])=>({id,...v})).sort((a,b)=>((a.mistakes||0)-(b.mistakes||0))||((b.done||0)-(a.done||0))||((b.points||0)-(a.points||0))); renderBoard(arr); }, ()=>{ list.innerHTML=`<div class="lbempty">⚠️ ما قدرناش نقرا الترتيب.</div>`; }); } }
-function wrongDetail(w){ if(!w) return ""; const ks=Object.keys(w); if(!ks.length) return '<span style="color:var(--ok)">✔ بدون أغلاط</span>'; return ks.map(k=>{ const m=k.match(/s(\d+)q(\d+)/); const si=m?(+m[1])+1:'?', ti=m?(+m[2])+1:'?'; return `<span style="color:#ffb0b6">مرحلة ${si}·سؤال ${ti}: ${w[k]}×</span>`; }).join(" · "); }
+function wrongDetail(w){ if(!w) return '<span style="color:var(--ok)">✔ بدون أغلاط</span>'; const ks=Object.keys(w); if(!ks.length) return '<span style="color:var(--ok)">✔ بدون أغلاط</span>'; return ks.map(k=>{ const v=w[k]; const n=(v&&typeof v==="object")?v.n:v; const m=k.match(/s(\d+)q(\d+)/); const si=m?(+m[1])+1:'?', ti=m?(+m[2])+1:'?'; return `<span style="color:#ffb0b6">م${si}·س${ti}: ${n}×</span>`; }).join(" · "); }
 function renderBoard(arr){ const list=$("#boardList"); const isAdmin=(location.hash||"").toLowerCase().indexOf("admin")>=0;
   if(!arr.length){ list.innerHTML=`<div class="lbempty">🏁 لسه ما فيش نتايج!<br>كون أول واحد يوصل القمة 🥇</div>`; return; }
-  const medals=["🥇","🥈","🥉"]; let html="";
+  window._board=arr; const medals=["🥇","🥈","🥉"]; let html="";
   if(isAdmin){ const clean=arr.slice().sort((a,b)=>((a.mistakes||0)-(b.mistakes||0))||((b.points||0)-(a.points||0)))[0];
-    html+=`<div class="goalbox" style="background:rgba(46,204,113,.14);border-color:var(--ok);text-align:right;direction:rtl">🏅 <b>الأنظف:</b> ${escapeHTML(clean.name||"—")} — <b>${clean.mistakes||0}</b> أغلاط · <b>${clean.points||0}</b> نقطة<br><span style="font-size:12px;color:#c3b58f">وضع المعلّم: يبان لكل طالب عدد أغلاطه ووين غلط بالضبط 👇</span></div>`;
+    html+=`<div class="goalbox" style="background:rgba(46,204,113,.14);border-color:var(--ok);text-align:right;direction:rtl">🏅 <b>الأنظف:</b> ${escapeHTML(clean.name||"—")} — <b>${clean.mistakes||0}</b> أغلاط · <b>${clean.points||0}</b> نقطة<br><span style="font-size:12px;color:#c3b58f">👆 اضغط على أي طالب لتقرير كامل بأخطائه (PDF)</span></div>`;
   }
   arr.forEach((p,i)=>{ const me=p.id===DEVICE_ID, cls="lbrow"+(me?" me":"")+(i===0?" top1":""), rank=i<3?medals[i]:(i+1);
-    const adminLine = isAdmin?`<div class="lbmeta" style="margin-top:4px">❌ <b style="color:#ff9aa0">${p.mistakes||0}</b> أغلاط · ${wrongDetail(p.wrong)}</div>`:"";
-    html+=`<div class="${cls}"><div class="lbrank">${rank}</div><div style="flex:1; min-width:0;"><div class="lbname">${escapeHTML(p.name||"مستكشف")}${me?'<span class="metag">أنت</span>':''}</div><div class="lbmeta">⭐${p.stars||0} · ${p.done||0}/5 مراحل متقنة</div>${adminLine}</div><div class="lbpts">${p.points}<small> نقطة</small></div></div>`; });
+    const adminLine = isAdmin?`<div class="lbmeta" style="margin-top:4px">❌ <b style="color:#ff9aa0">${p.mistakes||0}</b> أغلاط · ${wrongDetail(p.wrong)} <span style="color:var(--gold2)">· 📋 التقرير</span></div>`:"";
+    const clk=isAdmin?` onclick="openReport('${p.id}')" style="cursor:pointer"`:"";
+    html+=`<div class="${cls}"${clk}><div class="lbrank">${rank}</div><div style="flex:1; min-width:0;"><div class="lbname">${escapeHTML(p.name||"مستكشف")}${me?'<span class="metag">أنت</span>':''}</div><div class="lbmeta">⭐${p.stars||0} · ${p.done||0}/5 مراحل متقنة</div>${adminLine}</div><div class="lbpts">${p.points}<small> نقطة</small></div></div>`; });
   const myRank=arr.findIndex(p=>p.id===DEVICE_ID)+1; $("#boardSub").innerHTML=myRank>0?`ترتيبك الحين: <b style="color:var(--gold2)">#${myRank}</b> من ${arr.length} — يتحدّث مباشرة!`:`${arr.length} مشارك — يتحدّث مباشرة!`; list.innerHTML=html; }
 function escapeHTML(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function openReport(id){
+  const arr=window._board||[]; const p=arr.find(x=>x.id===id); if(!p){ return; }
+  const w=p.wrong||{}; const keys=Object.keys(w).sort();
+  let rows;
+  if(!keys.length){ rows='<div style="text-align:center;color:#1a7f4a;font-weight:900;padding:24px 10px">✅ ما عندهاش أي غلطة — أداء مثالي! 🌟</div>'; }
+  else { rows=keys.map((k,i)=>{ const v=w[k]; const isObj=v&&typeof v==="object"; const n=isObj?v.n:v; const m=k.match(/s(\d+)q(\d+)/); const loc="مرحلة "+((m?+m[1]:0)+1)+" · سؤال "+((m?+m[2]:0)+1); const q=isObj?(v.q||"—"):"(سؤال قديم — بدون تفاصيل، لعب قبل التحديث)"; const corr=isObj?(v.correct||"—"):"—"; const chose=(isObj&&v.chose&&v.chose.length)?[...new Set(v.chose)].join(" ، "):"—";
+      return `<div class="rep-item"><div class="rep-loc">#${i+1} · ${loc} · <span class="rep-n">غلط ${n}×</span></div><div class="rep-q">❓ ${escapeHTML(q)}</div><div class="rep-ln"><span class="rep-lbl bad">❌ اختار:</span> ${escapeHTML(chose)}</div><div class="rep-ln"><span class="rep-lbl ok">✅ الصح:</span> ${escapeHTML(corr)}</div></div>`; }).join(""); }
+  $("#repName").textContent=p.name||"مستكشف";
+  $("#repMeta").innerHTML=`🎮 <b>${GAME_TITLE}</b> · 🪙 ${p.points||0} نقطة · ⭐ ${p.stars||0}/15 · ${p.done||0}/5 مراحل · ❌ إجمالي الأغلاط: <b>${p.mistakes||0}</b>`;
+  $("#repBody").innerHTML=rows;
+  const d=new Date(); $("#repDate").textContent=d.getDate()+"/"+(d.getMonth()+1)+"/"+d.getFullYear();
+  $("#reportModal").classList.add("show");
+}
+document.addEventListener("click",e=>{ if(e.target&&e.target.id==="repCloseBtn") $("#reportModal").classList.remove("show"); });
 function adminReset(){ if(!fbReady){ toast("🔌 لوحة الصدارة غير مفعّلة"); return; } const pin=prompt("🔑 أدخل رمز المعلّم لمسح كل النتايج:"); if(pin===null) return; if(pin!==ADMIN_PIN){ toast("❌ رمز غير صحيح"); sBad(); return; } if(!confirm("⚠️ متأكد؟\nبيتم مسح كل نتايج الطلاب نهائياً ويبدا التسجيل من جديد.")) return; db.ref("boards/"+CLASS_ID).once("value").then(snap=>{ const d=snap.val()||{}, keys=Object.keys(d); if(!keys.length){ toast("🤷 ما فيش نتايج نمسحوها"); return; } const up={}; keys.forEach(k=>up[k]=null); db.ref("boards/"+CLASS_ID).update(up).then(()=>{ toast("🗑️ تم مسح كل النتايج! جولة جديدة 🎉"); sWin(); conf.burst(40); }).catch(e=>toast("تعذّر المسح: "+e.message)); }).catch(e=>toast("خطأ: "+e.message)); }
 
 function refreshStartUI(){ const has=S.name||S.points>0||Object.keys(S.done).length>0; $("#resetBtn").style.display=has?"inline-flex":"none"; if(S.name) $("#nameInput").value=S.name; if(has){ $("#resumeNote").style.display="block"; $("#resumeNote").innerHTML=`👋 مرحباً برجوعك <b>${S.name||"مستكشف"}</b>! عندك <b>${S.points}</b> نقطة، ووصلت للمرحلة <b>${Math.min(S.unlocked,5)}</b>.`; $("#startBtn").textContent="▶ كمّل المغامرة"; } else { $("#resumeNote").style.display="none"; $("#startBtn").textContent="🎮 يالله نبدو"; } }
@@ -572,6 +593,19 @@ $("#endCertBtn").onclick=()=>{ sClick(); openCert(); };
   <div class="cert-actions">
     <button class="btn" onclick="window.print()">🖨️ اطبع / احفظ PDF</button>
     <button class="btn ghost sm" id="certCloseBtn">إغلاق ✖</button>
+  </div>
+</div>
+<div id="reportModal" class="cert-modal">
+  <div class="cert-paper" id="reportPaper" style="max-width:640px; text-align:right;">
+    <div style="text-align:center"><div style="font-size:44px">📋</div><div class="cert-top" style="font-size:23px;">تقرير أخطاء الطالب</div></div>
+    <div class="cert-name" id="repName" style="display:block; font-size:26px; border-bottom:3px dashed #c9a227;">—</div>
+    <div id="repMeta" style="text-align:center; color:#4a3f1e; font-weight:800; margin:6px 0 14px; font-size:14px;"></div>
+    <div id="repBody"></div>
+    <div class="cert-foot"><div>📅 <span id="repDate"></span></div><div>✒️ المهندسة سلوان · عالم بايتي</div></div>
+  </div>
+  <div class="cert-actions">
+    <button class="btn" onclick="window.print()">🖨️ احفظ / اطبع PDF</button>
+    <button class="btn ghost sm" id="repCloseBtn">إغلاق ✖</button>
   </div>
 </div>
 </body>
