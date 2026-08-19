@@ -267,39 +267,39 @@ const STAGES=[
     intro:"بايتي رتّب كنوزه في خزنة بخانات مرقّمة. توصلها بالرقم!",
     tasks:[
       {kind:"concept", type:"mcq", q:"القائمة في بايثون تبدا العدّ من أي رقم؟", opts:["0","1","-1","2"], answer:0, why:"في بايثون أول خانة رقمها 0 مش 1 — دايماً نبدو من الصفر."},
-      {kind:"tap", list:K, answer:2, prompt:'بايتي يبي الكنز اللي في <b>كنوز[2]</b> — اضغط الخانة الصح.', why:"العدّ من 0: خانة[0]=ذهب، [1]=فضة، [2]=ماس. عاش!"},
-      {kind:"concept", type:"mcq", q:"كنوز[-1] شن الكنز؟", code:'كنوز = ["ذهب","فضة","ماس","لؤلؤ","ياقوت"]\nprint(كنوز[-1])', opts:["ياقوت (آخر واحد)","ذهب","ماس","خطأ"], answer:0, why:"الفهرس السالب [-1] معناه آخر عنصر في القائمة = ياقوت."},
-      {kind:"tap", list:K, answer:0, prompt:'اضغط على <b>كنوز[0]</b> — أول خانة في الخزنة.', why:"خانة [0] هي أول كنز = الذهب."},
-      {kind:"concept", type:"mcq", q:"شن يطبع؟", code:'كنوز = ["ذهب","فضة","ماس"]\nprint(كنوز[1])', opts:["فضة","ذهب","ماس","1"], answer:0, why:"خانة [1] = فضة (لأن العدّ يبدا من 0)."}
+      {kind:"tap", list:K, answer:2, prompt:'بايتي يبي الكنز اللي في <b>treasures[2]</b> — اضغط الخانة الصح.', why:"العدّ من 0: خانة[0]=ذهب، [1]=فضة، [2]=ماس. عاش!"},
+      {kind:"concept", type:"mcq", q:"treasures[-1] شن الكنز؟", code:'treasures = ["ذهب","فضة","ماس","لؤلؤ","ياقوت"]\nprint(treasures[-1])', opts:["ياقوت (آخر واحد)","ذهب","ماس","خطأ"], answer:0, why:"الفهرس السالب [-1] معناه آخر عنصر في القائمة = ياقوت."},
+      {kind:"tap", list:K, answer:0, prompt:'اضغط على <b>treasures[0]</b> — أول خانة في الخزنة.', why:"خانة [0] هي أول كنز = الذهب."},
+      {kind:"concept", type:"mcq", q:"شن يطبع؟", code:'treasures = ["ذهب","فضة","ماس"]\nprint(treasures[1])', opts:["فضة","ذهب","ماس","1"], answer:0, why:"خانة [1] = فضة (لأن العدّ يبدا من 0)."}
     ]
   },
   { id:1, emoji:"✂️", title:"القص السحري", tag:"التقطيع [a:b]",
     desc:"قصّ شريحة من الرفوف بالمقابض.",
     intro:"بايتي يبي يقص جزء من رفوفه يعطيه لصاحبه. حدّد الشريحة وقصّ!",
     tasks:[
-      {kind:"concept", type:"mcq", q:"شن يطبع؟", code:'أرقام = [10,20,30,40,50]\nprint(أرقام[1:3])', opts:["[20, 30]","[10, 20, 30]","[20, 30, 40]","[10, 20]"], answer:0, why:"التقطيع [1:3] يبدا من خانة 1 ويوقف قبل 3 → خانة 1 و2 = 20 و30."},
-      {kind:"slice", list:N, targetSeq:["30","40","50"], prompt:'قصّ الشريحة اللي فيها <b>30 و40 و50</b>. اضبط start:stop وشغّل.', why:"أرقام[2:5] = من خانة 2 لين قبل 5 = 30, 40, 50."},
-      {kind:"concept", type:"mcq", q:"أرقام[:2] يعني؟", opts:["أول عنصرين [10, 20]","كل القائمة","آخر عنصرين","خانة 2 بس"], answer:0, why:"لما نسيبوا البداية فاضية، يبدا من 0. [:2] = خانة 0 و1 = 10 و20."},
+      {kind:"concept", type:"mcq", q:"شن يطبع؟", code:'numbers = [10,20,30,40,50]\nprint(numbers[1:3])', opts:["[20, 30]","[10, 20, 30]","[20, 30, 40]","[10, 20]"], answer:0, why:"التقطيع [1:3] يبدا من خانة 1 ويوقف قبل 3 → خانة 1 و2 = 20 و30."},
+      {kind:"slice", list:N, targetSeq:["30","40","50"], prompt:'قصّ الشريحة اللي فيها <b>30 و40 و50</b>. اضبط start:stop وشغّل.', why:"numbers[2:5] = من خانة 2 لين قبل 5 = 30, 40, 50."},
+      {kind:"concept", type:"mcq", q:"numbers[:2] يعني؟", opts:["أول عنصرين [10, 20]","كل القائمة","آخر عنصرين","خانة 2 بس"], answer:0, why:"لما نسيبوا البداية فاضية، يبدا من 0. [:2] = خانة 0 و1 = 10 و20."},
       {kind:"slice", list:N, targetSeq:["10","20","30"], prompt:'قصّ <b>أول 3 عناصر</b> من الرفوف.', why:"[0:3] = أول 3 عناصر = 10, 20, 30."},
-      {kind:"concept", type:"mcq", q:"شن يطبع؟", code:'أرقام = [10,20,30,40,50]\nprint(أرقام[3:])', opts:["[40, 50]","[30, 40, 50]","[40]","[50]"], answer:0, why:"[3:] معناه من خانة 3 للنهاية = 40 و50."}
+      {kind:"concept", type:"mcq", q:"شن يطبع؟", code:'numbers = [10,20,30,40,50]\nprint(numbers[3:])', opts:["[40, 50]","[30, 40, 50]","[40]","[50]"], answer:0, why:"[3:] معناه من خانة 3 للنهاية = 40 و50."}
     ]
   },
   { id:2, emoji:"🎒", title:"حقيبة بايتي", tag:"إضافة وحذف",
     desc:"عبّي وفرّغ الحقيبة بالعمليات الصح.",
     intro:"بايتي يعبّي حقيبته ويفرّغها. اختر العملية الصح وشوف القائمة تتغيّر!",
     tasks:[
-      {kind:"concept", type:"mcq", q:"شن تصير القائمة؟", code:'فواكه = ["تفاح","موز"]\nفواكه.append("عنب")', opts:['["تفاح","موز","عنب"]','["عنب","تفاح","موز"]','["تفاح","عنب"]','خطأ'], answer:0, why:"append تزيد العنصر في آخر القائمة."},
+      {kind:"concept", type:"mcq", q:"شن تصير القائمة؟", code:'fruits = ["تفاح","موز"]\nfruits.append("عنب")', opts:['["تفاح","موز","عنب"]','["عنب","تفاح","موز"]','["تفاح","عنب"]','خطأ'], answer:0, why:"append تزيد العنصر في آخر القائمة."},
       {kind:"method", list:F.slice(), item:"🍊 برتقال", answer:"append", options:["append","insert","remove","pop"], goal:'["🍎 تفاح","🍌 موز","🍊 برتقال"]', prompt:'خلّي القائمة تصير <b>[تفاح, موز, برتقال]</b> — أي عملية تستعمل؟', why:"append تحط «برتقال» في آخر القائمة."},
-      {kind:"concept", type:"mcq", q:"فواكه.insert(0,'فراولة') — الفراولة تروح لوين؟", opts:["أول خانة (index 0)","آخر خانة","تنمسح","وسط القائمة"], answer:0, why:"insert(0, ...) تحشر العنصر في الخانة 0 وتزحزح الباقي."},
+      {kind:"concept", type:"mcq", q:"fruits.insert(0,'فراولة') — الفراولة تروح لوين؟", opts:["أول خانة (index 0)","آخر خانة","تنمسح","وسط القائمة"], answer:0, why:"insert(0, ...) تحشر العنصر في الخانة 0 وتزحزح الباقي."},
       {kind:"method", list:F.slice(), item:"🍌 موز", answer:"remove", options:["append","insert","remove","pop"], goal:'["🍎 تفاح"]', prompt:'شيل <b>«موز»</b> من القائمة.', why:"remove('موز') تشيل العنصر بالاسم."},
-      {kind:"concept", type:"mcq", q:"فواكه.pop() تشيل شن؟", opts:["آخر عنصر","أول عنصر","كل القائمة","لا شيء"], answer:0, why:"pop() بدون رقم تشيل آخر عنصر وترجّعه."}
+      {kind:"concept", type:"mcq", q:"fruits.pop() تشيل شن؟", opts:["آخر عنصر","أول عنصر","كل القائمة","لا شيء"], answer:0, why:"pop() بدون رقم تشيل آخر عنصر وترجّعه."}
     ]
   },
   { id:3, emoji:"🔎", title:"بايتي يدوّر", tag:"بحث وإحصاء",
     desc:"دوّر واحسب كنوزك بسرعة.",
     intro:"بايتي يفتّش ويحصي كنوزه. جاوب بسرعة (لو المؤقّت مشغّل)!",
     tasks:[
-      {kind:"concept", type:"mcq", q:"شن النتيجة؟", code:'كنوز = ["ذهب","فضة","ماس"]\nprint("ماس" in كنوز)', opts:["True","False","ماس","خطأ"], answer:0, why:"in تسأل: العنصر موجود؟ الماس موجود، فالنتيجة True."},
+      {kind:"concept", type:"mcq", q:"شن النتيجة؟", code:'treasures = ["ذهب","فضة","ماس"]\nprint("ماس" in كنوز)', opts:["True","False","ماس","خطأ"], answer:0, why:"in تسأل: العنصر موجود؟ الماس موجود، فالنتيجة True."},
       {kind:"concept", type:"mcq", q:"len([5,10,15,20]) = ؟", opts:["4","20","10","3"], answer:0, why:"len تعطي عدد العناصر في القائمة = 4."},
       {kind:"concept", type:"mcq", q:"max([3,9,2,7]) = ؟", opts:["9","3","2","21"], answer:0, why:"max تعطي أكبر قيمة في القائمة = 9."},
       {kind:"tap", list:K, answer:1, prompt:'دوّر: في أي خانة «<b>🥈 فضة</b>»؟ اضغط الخانة الصح.', why:"index('فضة') = 1، لأنها الخانة الثانية (والعدّ من 0)."},
@@ -311,10 +311,10 @@ const STAGES=[
     intro:"بايتي ينظّم رفوفه نهائياً ويجمع كل اللي تعلّمه. المرحلة الأخيرة!",
     tasks:[
       {kind:"method", list:["5","2","8","1"], answer:"sort", options:["sort","reverse"], goal:'[1, 2, 5, 8]', prompt:'رتّب <b>[5, 2, 8, 1]</b> من الأصغر للأكبر — أي زر؟', why:"sort() ترتّب تصاعدي: 1, 2, 5, 8."},
-      {kind:"concept", type:"mcq", q:"بعد أسماء.sort() على ['سالم','أحمد','خالد'] الترتيب؟", opts:["[أحمد, خالد, سالم]","[سالم, أحمد, خالد]","[خالد, أحمد, سالم]","ما يتغيّرش"], answer:0, why:"sort() ترتّب النصوص أبجدياً: أحمد، خالد، سالم."},
+      {kind:"concept", type:"mcq", q:"بعد names.sort() على ['سالم','أحمد','خالد'] الترتيب؟", opts:["[أحمد, خالد, سالم]","[سالم, أحمد, خالد]","[خالد, أحمد, سالم]","ما يتغيّرش"], answer:0, why:"sort() ترتّب النصوص أبجدياً: أحمد، خالد، سالم."},
       {kind:"concept", type:"mcq", q:"reverse() على [1,2,3] تعطي؟", opts:["[3, 2, 1]","[1, 2, 3]","[2, 1, 3]","[3, 1, 2]"], answer:0, why:"reverse تقلب ترتيب القائمة رأساً على عقب."},
       {kind:"grid", rows:3, cols:3, grid:[["🍎","🍌","🍇"],["🥭","🍊","🍉"],["🍓","🥝","🍒"]], answer:{r:1,c:2}, prompt:'خريطة الكنز <b>شبكة[1][2]</b> — اضغط الخانة الصح (الصف 1، العمود 2).', why:"شبكة[1][2]: الرقم الأول الصف (1)، الثاني العمود (2)، والعدّ من 0 → 🍉."},
-      {kind:"concept", type:"mcq", q:"شن يطبع؟", code:'كنوز = ["ذهب","فضة"]\nكنوز.append("ماس")\nprint(كنوز[2])', opts:["ماس","فضة","ذهب","خطأ"], answer:0, why:"append زادت «ماس» في الآخر (خانة 2)، وprint(كنوز[2]) = ماس. عاش، خلّصت المغامرة! 🎉"}
+      {kind:"concept", type:"mcq", q:"شن يطبع؟", code:'treasures = ["ذهب","فضة"]\ntreasures.append("ماس")\nprint(treasures[2])', opts:["ماس","فضة","ذهب","خطأ"], answer:0, why:"append زادت «ماس» في الآخر (خانة 2)، وprint(treasures[2]) = ماس. عاش، خلّصت المغامرة! 🎉"}
     ]
   }
 ];
@@ -363,15 +363,15 @@ let cur={ stage:0, idx:0, gained:0, correctInStage:0, totalInStage:0, mistakes:0
 let curCorrect=0, curTask=null;
 function startStage(i){ cur={ stage:i, idx:0, gained:0, correctInStage:0, totalInStage:STAGES[i].tasks.length, mistakes:0 }; playing=true; S.stage=i; save(); updateHUD(); show("scPlay"); renderTask(); }
 function renderTask(){ const s=STAGES[cur.stage], t=s.tasks[cur.idx]; curTask=t; if(t.kind==="concept") renderQuestion(s,t); else renderInteractive(s,t); }
-function bidiFix(s){ return String(s).replace(/(\[\s*-?[0-9][0-9,\s\.-]*\])/g,'<bdi dir="ltr">$1</bdi>'); }
+function bidiFix(s){ return String(s).replace(/([A-Za-z_][A-Za-z0-9_]*(?:\[[^\]]*\])+|\[\s*-?[0-9][0-9,\s.-]*\])/g,'<bdi dir="ltr">$1</bdi>'); }
 function codeHTML(code){ if(!code) return ""; let h=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\b(for|in|if|else|print|append|insert|remove|pop|sort|reverse|len|max|min|sum|True|False)\b/g,m=>['append','insert','remove','pop','sort','reverse','len','max','min','sum','print'].indexOf(m)>=0?'<span class="fn">'+m+'</span>':'<span class="kw">'+m+'</span>').replace(/\b(\d+)\b/g,'<span class="num">$1</span>'); return '<div class="code">'+h+'</div>'; }
 
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;const t=a[i];a[i]=a[j];a[j]=t;}return a;}
 function renderQuestion(s,q){
   const isTF=q.type==="tf"; curCorrect=isTF?(q.answer?1:0):q.answer;
-  let optsHTML= isTF?`<div class="tf"><div class="opt" data-i="1">✅ صح</div><div class="opt" data-i="0">❌ غلط</div></div>`:'<div class="opts">'+shuffle(q.opts.map((o,i)=>({o,i}))).map((it,pos)=>`<div class="opt" data-i="${it.i}"><span class="k">${["أ","ب","ج","د"][pos]}</span><span>${it.o}</span></div>`).join("")+'</div>';
+  let optsHTML= isTF?`<div class="tf"><div class="opt" data-i="1">✅ صح</div><div class="opt" data-i="0">❌ غلط</div></div>`:'<div class="opts">'+shuffle(q.opts.map((o,i)=>({o,i}))).map((it,pos)=>`<div class="opt" data-i="${it.i}"><span class="k">${["أ","ب","ج","د"][pos]}</span><span>${bidiFix(it.o)}</span></div>`).join("")+'</div>';
   $("#playCard").innerHTML=`
-    <div class="qhead"><span class="qtag">${s.emoji} ${s.tag}</span><span class="qcount">مهمة ${cur.idx+1} من ${s.tasks.length}</span></div>
+    <div class="qhead"><span class="qtag">${s.emoji} ${bidiFix(s.tag)}</span><span class="qcount">مهمة ${cur.idx+1} من ${s.tasks.length}</span></div>
     ${timerOn?`<div class="qtimer"><span style="font-size:16px">⏱️</span><div class="qtimer-bar"><i id="qtBar"></i></div><span class="qtnum" id="qtNum">${QTIME}s</span></div>`:""}
     <div class="qtext">${bidiFix(q.q)}</div>${codeHTML(q.code)}${optsHTML}
     <div class="feedback" id="fb"></div>
@@ -397,8 +397,8 @@ function arrEq(a,b){ if(!a||!b||a.length!==b.length) return false; for(let i=0;i
 function shelfHTML(list, clickable){ return '<div class="shelf '+(clickable?'':'locked')+'">'+list.map((v,i)=>`<div class="slot" ${clickable?`data-i="${i}"`:''}><span class="slot-idx">[${i}]</span><span class="slot-val">${v}</span></div>`).join('')+'</div>'; }
 function stepperHTML(key,label,val){ return `<div class="stepper"><div class="lbl">${label}</div><div class="row"><button data-k="${key}" data-d="-1">−</button><span class="val" id="val_${key}">${val}</span><button data-k="${key}" data-d="1">+</button></div></div>`; }
 function baseCard(s,t,inner){ $("#playCard").innerHTML=`
-  <div class="qhead"><span class="qtag">${s.emoji} ${s.tag}</span><span class="qcount">مهمة ${cur.idx+1} من ${s.tasks.length}</span></div>
-  <div class="mission">🎯 ${t.prompt}</div>${inner}
+  <div class="qhead"><span class="qtag">${s.emoji} ${bidiFix(s.tag)}</span><span class="qcount">مهمة ${cur.idx+1} من ${s.tasks.length}</span></div>
+  <div class="mission">🎯 ${bidiFix(t.prompt)}</div>${inner}
   <div class="feedback" id="fb"></div>
   <div class="nav"><button class="btn ghost sm" id="quitBtn">🗺️ خروج</button><button class="btn sm" id="nextBtn" style="display:none;">التالي ▶</button></div>`;
   $("#quitBtn").onclick=()=>{ sClick(); buildMap(); show("scMap"); }; }
@@ -423,7 +423,7 @@ function renderSlice(s,t){ ip.p={start:0, stop:2};
   document.querySelectorAll(".stepper button").forEach(b=> b.onclick=()=>{ if(ip.done) return; const k=b.dataset.k,d=+b.dataset.d; ip.p[k]=Math.max(0,Math.min(t.list.length, ip.p[k]+d)); $("#val_"+k).textContent=ip.p[k]; sClick(); slicePreview(t); });
   $("#runBtn").onclick=()=>runSlice(t); slicePreview(t);
 }
-function slicePreview(t){ const pv=$("#codePrev"); if(pv) pv.innerHTML=`أرقام[<span class="num">${ip.p.start}</span>:<span class="num">${ip.p.stop}</span>]`;
+function slicePreview(t){ const pv=$("#codePrev"); if(pv) pv.innerHTML=`numbers[<span class="num">${ip.p.start}</span>:<span class="num">${ip.p.stop}</span>]`;
   document.querySelectorAll("#playCard .slot").forEach((sl,i)=> sl.classList.toggle("sel", i>=ip.p.start && i<ip.p.stop)); }
 function runSlice(t){ if(ip.done) return; const sl=t.list.slice(ip.p.start,ip.p.stop); const ok=arrEq(sl,t.targetSeq);
   $("#cuttray").innerHTML=`<div class="lbl">الشريحة اللي قصّها بايتي:</div><div style="font-weight:900;color:var(--gold2);font-size:18px;direction:ltr">[ ${sl.join(" , ")||"فاضية"} ]</div>`;
@@ -455,11 +455,11 @@ function scoreInteractive(correct, msg){
     let streakTxt=""; if(S.streak%STREAK_EVERY===0){ gained+=PTS_STREAK_BONUS; streakTxt=` <span class="pts">+${PTS_STREAK_BONUS} سلسلة 🔥</span>`; }
     cur.gained+=gained; sGood(); conf.burst(28);
     const anchor=$("#runBtn")||$("#fb"); if(anchor){ const r=anchor.getBoundingClientRect(); floatCoin(r.left+r.width/2, r.top, "+"+gained+" 🪙"); }
-    fb.className="feedback good show"; fb.innerHTML=`<div class="fi">🎉</div><div class="ft">${full?"من أول مرة! ":"عاش، ضبطتها! "}<span class="pts">+${full?PTS_CORRECT:Math.round(PTS_CORRECT/2)}</span>${streakTxt}<br><span style="opacity:.92">${msg}</span></div>`;
+    fb.className="feedback good show"; fb.innerHTML=`<div class="fi">🎉</div><div class="ft">${full?"من أول مرة! ":"عاش، ضبطتها! "}<span class="pts">+${full?PTS_CORRECT:Math.round(PTS_CORRECT/2)}</span>${streakTxt}<br><span style="opacity:.92">${bidiFix(msg)}</span></div>`;
     const rb=$("#runBtn"); if(rb) rb.disabled=true;
     $("#nextBtn").style.display="inline-flex"; $("#nextBtn").onclick=()=>{ sClick(); nextStep(); };
     if(S.streak>=STREAK_EVERY && S.streak%STREAK_EVERY===0) toast(`🔥 سلسلة ${S.streak}!`);
-  } else { ip.failed=true; S.streak=0; logMistake(stripHtml(curTask&&curTask.prompt||""),"",stripHtml(msg)); fb.className="feedback bad show"; fb.innerHTML=`<div class="fi">🤔</div><div class="ft">مش مشكلة، جرّب مرة ثانية!<br><span style="opacity:.95">${msg}</span></div>`; }
+  } else { ip.failed=true; S.streak=0; logMistake(stripHtml(curTask&&curTask.prompt||""),"",stripHtml(msg)); fb.className="feedback bad show"; fb.innerHTML=`<div class="fi">🤔</div><div class="ft">مش مشكلة، جرّب مرة ثانية!<br><span style="opacity:.95">${bidiFix(msg)}</span></div>`; }
   save(); updateHUD();
 }
 function scoreAnswer(correct, why, el, speed, timedOut){
@@ -468,9 +468,9 @@ function scoreAnswer(correct, why, el, speed, timedOut){
     let gained=PTS_CORRECT+speed, streakTxt=""; if(S.streak%STREAK_EVERY===0){ gained+=PTS_STREAK_BONUS; streakTxt=` <span class="pts">+${PTS_STREAK_BONUS} سلسلة 🔥</span>`; }
     cur.gained+=gained; sGood(); conf.burst(24);
     if(el){ const r=el.getBoundingClientRect(); floatCoin(r.left+r.width/2, r.top, "+"+gained+" 🪙"); }
-    fb.className="feedback good show"; fb.innerHTML=`<div class="fi">🎉</div><div class="ft">${["عاش عليك!","أحسنت يا بطل!","تمام صح!","برافو!"][Math.random()*4|0]} <span class="pts">+${PTS_CORRECT}</span>${speed>0?` <span class="pts">+${speed} سرعة ⚡</span>`:""}${streakTxt}<br><span style="opacity:.92">${why}</span></div>`;
+    fb.className="feedback good show"; fb.innerHTML=`<div class="fi">🎉</div><div class="ft">${["عاش عليك!","أحسنت يا بطل!","تمام صح!","برافو!"][Math.random()*4|0]} <span class="pts">+${PTS_CORRECT}</span>${speed>0?` <span class="pts">+${speed} سرعة ⚡</span>`:""}${streakTxt}<br><span style="opacity:.92">${bidiFix(why)}</span></div>`;
     if(S.streak>=STREAK_EVERY && S.streak%STREAK_EVERY===0) toast(`🔥 سلسلة ${S.streak}!`);
-  } else { S.streak=0; sBad(); fb.className="feedback bad show"; const head=timedOut?"⏰ خلص الوقت!":"مش مشكلة، من الغلطة نتعلّموا:"; fb.innerHTML=`<div class="fi">${timedOut?"⏰":"💡"}</div><div class="ft">${head}<br><span style="opacity:.95">${why}</span></div>`; }
+  } else { S.streak=0; sBad(); fb.className="feedback bad show"; const head=timedOut?"⏰ خلص الوقت!":"مش مشكلة، من الغلطة نتعلّموا:"; fb.innerHTML=`<div class="fi">${timedOut?"⏰":"💡"}</div><div class="ft">${head}<br><span style="opacity:.95">${bidiFix(why)}</span></div>`; }
   save(); updateHUD();
 }
 
